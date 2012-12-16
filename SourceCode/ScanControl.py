@@ -10,13 +10,35 @@ from ConfUtilities import readConfigFile
 #
 class ScanController:
     """Used to control the entire scan."""
-    
+
     def __init__(self, nfsCofiguration, heightMap):
-        # TODO
+        self.hMap = _calculateApplicableHeightMap(nfsConfiguration, heightMap)
+        self.nfsConf = nfsConfiguration
 
     def startScan(self):
-        """Starts the scanning process."""
-        # TODO
+        dx = float(nfsConfig['trueXDimension']) / (nfsConfig['pointXDimension'] - 1)
+        dy = float(nfsConfig['trueYDimension']) / (nfsConfig['pointYDimension'] - 1)
+        probeHeight = self.probeConfig('probeHeight')
+        for i in range(0, self.nfsConf['pointXDimension']):
+            currentHeight = self.hMap[i][0]
+            # spusti sondu na currentHeight
+            # skeniraj
+            for j in range(1, self.nfsConf['pointYDimension']):
+                if currentHeight < self.hMap[i][j]:
+                    # digni sondu na hMap[i][j]
+                    # pomakni sondu za dy
+                else if currentHeight > self.hMap[i][j]:
+                    # pomakni sondu za dy
+                    # spusti sondu na hMap[i][j]
+                else:
+                    #pomakni sondu za dy
+                currentHeight = self.hMap[i][j]
+                # skeniraj
+            # digni sondu na max
+            # vrati sondu za pointYDimension * dy
+            # spusti sondu za dx
+            # posalji scan cijelog reda na ispis
+        
 
     #################### private
 
@@ -25,8 +47,8 @@ class ScanController:
             Converts the true height map to a map of
             height accessible safely by the probe.
         """
-        probeConfig = readConfigFile(nfsConfig['probeConfigFile']) 
-        if probeConfig == None:
+        self.probeConfig = readConfigFile(nfsConfig['probeConfigFile']) 
+        if self.probeConfig == None:
             raise Exception('Unable to read probe config file')
         dx = float(nfsConfig['trueXDimension']) / (nfsConfig['pointXDimension'] - 1)
         dy = float(nfsConfig['trueYDimension']) / (nfsConfig['pointYDimension'] - 1)

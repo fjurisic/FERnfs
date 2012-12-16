@@ -17,7 +17,7 @@ def readConfigFile(fileName):
     try:
         for line in open(fileName, "r"):
             line = line.strip()
-            if line.startswith("#"):
+            if line.startswith("#") or line is "":
                 continue
             parts = line.split( "=", 1)
             params[parts[0].strip()] = parts[1].strip()
@@ -30,13 +30,6 @@ def readConfigFile(fileName):
 
     return params
 
-#
-#   Checks if given configuration can be used to run the aplication.
-#@param config configuration dictionary as produced by readConfigFile
-#@return true if configuration is valid
-def checkConfiguration(config):
-    # TODO once configuration attributes are determined
-    return 1
 
 if __name__ == "__main__":
     print readConfigFile(sys.argv[1])
