@@ -6,6 +6,8 @@
 import thread
 from time import sleep
 from MOTORSSimulator import Motors
+from SavingResult import SavingResult
+from ProbeControlSimulator import ProbeControl
 
 #
 #   Class used to regulate and perform scans
@@ -35,6 +37,8 @@ class ScanController:
         self.yOffsetSteps = 0
         self.stopSignal = -1
         self.motors = Motors()
+        self.probeControl = ProbeControl(nfsConf)
+        self.savingResult = SavingResult(nfsConf)
         self.motors.opensercom()
         if 'startingXOffset' in nfsConf:
             offset = float(nfsConf['startingXOffset'])
@@ -79,8 +83,8 @@ class ScanController:
         """ Starts the scan for real. """
         # move probe to safe height
         # Move required starting offset and note position
-        xPosition = self.xOffsetSteps * self.stepSize - float(self.nfsConf['startingXOffset'])
-        baseYPosition = self.yOffsetSteps * self.stepSize - float(self.nfsConf['startingYOffset'])
+        baseXPosition = self.xOffsetSteps * self.stepSize - float(self.nfsConf['startingXOffset'])
+        yPosition = self.yOffsetSteps * self.stepSize - float(self.nfsConf['startingYOffset'])
         self.motors.move(self.xOffsetSteps, self.yOffsetSteps, 0)
         sleep(self.stepWait * (self.xOffsetSteps + self.yOffsetSteps))
         while True:
@@ -92,34 +96,37 @@ class ScanController:
                 print "Not good"
             scanResults = []
             backSteps = 0
-            yPosition = baseYPosition
+            xPosition = baseXPosition
             while True:
                 # scan and store result
                 print "P: Scanning point"
+                scanResult = self.probeControl.scan()
+                self.savingResult.setPointResult(scanResult)
                 if self.scanZOption == 2:
                     # height adjustment may be necessary
                     pass
                 
-                yPosition += self.stepY * self.stepSize
-                if yPosition > self.scanYLen:
+                xPosition += self.stepX * self.stepSize
+                if xPosition > self.scanXLen:
                     break
                 if self.stopSignal == 1:
                     self.motors.reset()
                     self._completeScan()
                     return
-                self.motors.moveYF(self.stepY)
-                sleep(self.stepWait * self.stepY)
+                self.motors.moveXR(self.stepX)
+                sleep(self.stepWait * self.stepX)
                 backSteps += 1
             # store result list
             print "D: Storing scan results"
+            self.savingResult.saveOneLineResult()
             # move probe to safe height 
-            self.motors.moveYR(self.stepY * backSteps)
-            sleep(self.stepWait * self.stepY * backSteps)
+            self.motors.moveXL(self.stepX * backSteps)
+            sleep(self.stepWait * self.stepX * backSteps)
             self.linesScanned += 1
-            xPosition += self.stepX * self.stepSize
-            if xPosition > self.scanXLen or self.stopSignal == 1:
+            yPosition += self.stepY * self.stepSize
+            if yPosition > self.scanYLen or self.stopSignal == 1:
                      break
-            self.motors.moveXR(self.stepX)
+            self.motors.moveYF(self.stepY)
             sleep(self.stepY)
         
         # scan finished or interrupted
@@ -140,6 +147,7 @@ class ScanController:
         if self.linesScanned != 0:
             scanConf.write('linesScanned='+str(self.linesScanned))
         scanConf.close()
+        self.savingResult.waitCompletition()
         if self.callbackFunction is not None:
             self.callbackFunction()
 
