@@ -4,7 +4,8 @@
 #
 
 import thread
-from MOTORS2 import Motors
+from time import sleep
+from MOTORSSimulator import Motors
 
 #
 #   Class used to regulate and perform scans
@@ -19,7 +20,7 @@ class ScanController:
         self.callbackFunction = callbackFunction
 
         if  'scanXLength' not in nfsConf or \
-            'scanYLenght' not in nfsConf or \
+            'scanYLength' not in nfsConf or \
             'stepSize'    not in nfsConf or \
             'stepsPerScanX' not in nfsConf or \
             'stepsPerScanY' not in nfsConf:
@@ -38,11 +39,11 @@ class ScanController:
         if 'startingXOffset' in nfsConf:
             offset = float(nfsConf['startingXOffset'])
             while self.xOffsetSteps * self.stepSize < offset:
-                self.xOffsetSteps++
+                self.xOffsetSteps += 1
         if 'startingYOffset' in nfsConf:
             offset = float(nfsConf['startingYOffset'])
             while self.yOffsetSteps * self.stepSize < offset:
-                self.yOffsetSteps++
+                self.yOffsetSteps += 1
         # continuing a interrupted scan?
         if 'linesScanned' in nfsConf:
             self.linesScanned = nfsConf['linesScanned']
@@ -55,7 +56,7 @@ class ScanController:
                 self.hMap = _calculateApplicableHeightMap(nfsConf)
 
         elif 'scanZposition' in nfsConf:
-            if nfsConf['scanZposition'] is not "fixed":
+            if nfsConf['scanZposition'] != "fixed":
                 self.scanZOption = 1
                 self.scanFixedHeight = float(nfsConf['scanZposition'])
         else:
@@ -66,7 +67,7 @@ class ScanController:
         """ Starts the scan as a new thread."""
         if self.stopSignal == -1:
             self.stopSignal = 0
-            thread.start_new_thread(_startScan, ())
+            thread.start_new_thread(self._startScan, ())
         
     def stopScan(self):
         """ Raises the stop signal. """
@@ -74,29 +75,30 @@ class ScanController:
 
     #################### private
 
-    def _startScan():
+    def _startScan(self):
         """ Starts the scan for real. """
         # move probe to safe height
         # Move required starting offset and note position
         xPosition = self.xOffsetSteps * self.stepSize - float(self.nfsConf['startingXOffset'])
         baseYPosition = self.yOffsetSteps * self.stepSize - float(self.nfsConf['startingYOffset'])
-        self.motors.moveXR(self.xOffsetSteps)
-        self.motors.moveYF(self.yOffsetSteps)
+        self.motors.move(self.xOffsetSteps, self.yOffsetSteps, 0)
         sleep(self.stepWait * (self.xOffsetSteps + self.yOffsetSteps))
-        
         while True:
             # move probe to initial height
-            if self.probeZOption == 1:
-                # move to fixed height
-            elif self.probeZOption == 2:
+            if self.scanZOption == 1:
+                print "Probudio se" 
+            elif self.scanZOption == 2:
                 # use hMap
+                print "Not good"
             scanResults = []
             backSteps = 0
             yPosition = baseYPosition
             while True:
                 # scan and store result
-                if self.probeZOption == 2:
+                print "P: Scanning point"
+                if self.scanZOption == 2:
                     # height adjustment may be necessary
+                    pass
                 
                 yPosition += self.stepY * self.stepSize
                 if yPosition > self.scanYLen:
@@ -107,14 +109,15 @@ class ScanController:
                     return
                 self.motors.moveYF(self.stepY)
                 sleep(self.stepWait * self.stepY)
-                backSteps++
+                backSteps += 1
             # store result list
+            print "D: Storing scan results"
             # move probe to safe height 
             self.motors.moveYR(self.stepY * backSteps)
             sleep(self.stepWait * self.stepY * backSteps)
-            self.linesScanned++
+            self.linesScanned += 1
             xPosition += self.stepX * self.stepSize
-            if xPosition > self.scanYlen or self.stopSignal == 1:
+            if xPosition > self.scanXLen or self.stopSignal == 1:
                      break
             self.motors.moveXR(self.stepX)
             sleep(self.stepY)
@@ -122,12 +125,13 @@ class ScanController:
         # scan finished or interrupted
         
         self.motors.reset()
+        self.motors.closesercom()
         if self.stopSignal != 1:
             self.linesScanned = 0 
-        _completeScan()
+        self._completeScan()
         return
         
-    def _completeScan():
+    def _completeScan(self):
         """ Writes scan configuration to scan result location. """
         scanConf = open(self.nfsConf['scanResultFolder']+"ScanConfig.conf", "w")
         for attribute, value in self.nfsConf.iteritems():

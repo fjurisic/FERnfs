@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 #   This module encapsulates all NFS functionality.
 #
@@ -6,6 +7,7 @@ from ScanControl import ScanController
 from ConfUtilities import readConfigFile
 import threading
 import os
+import sys
 
 class NearFieldScanner:
     """ Solution for all your near fields """
@@ -13,7 +15,7 @@ class NearFieldScanner:
     def __init__(self, nfsConfig, callbackFunction=None):
         """ Create your own near field scanner """
         # quick and dirty, TODO implement full options
-        if not os.path.exists(nfsConfig['scanResultFolder'])
+        if not os.path.exists(nfsConfig['scanResultFolder']):
             os.makedirs(nfsConfig['scanResultFolder'])
         self.scanController = ScanController(nfsConfig, callbackFunction)
 
@@ -27,7 +29,7 @@ class NearFieldScanner:
 
 cond = threading.Condition()
 
-def rawCallback(self):
+def rawCallback():
     cond.acquire()
     cond.notifyAll()
     cond.release()
