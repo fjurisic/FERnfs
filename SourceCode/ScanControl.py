@@ -105,7 +105,7 @@ class ScanController:
                     break
                 if self.stopSignal == 1:
                     self.motors.reset()
-                    _completeScan()
+                    self._completeScan()
                     return
                 self.motors.moveYF(self.stepY)
                 sleep(self.stepWait * self.stepY)
@@ -138,9 +138,9 @@ class ScanController:
             if attribute is not 'linesScanned':
                 scanConf.write(attribute+'='+value+'\n')
         if self.linesScanned != 0:
-            scanConf.write('linesScanned='+self.linesScanned)
+            scanConf.write('linesScanned='+str(self.linesScanned))
         scanConf.close()
-        if self.callbackFunction != None:
+        if self.callbackFunction is not None:
             self.callbackFunction()
 
 
