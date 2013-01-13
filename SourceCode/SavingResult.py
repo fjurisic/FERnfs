@@ -22,12 +22,9 @@ class SavingResult:
         self.tempY=0
         self.oneLineResult=list()
         self.q=Queue()
-        print "radim"
         self.t= Thread(target=self._saveOneLineResult)
-        print "radim"
         self.t.daemon = True
         self.t.start()
-        print "radim"
 
 #metoda za privremenu pohranu podataka o jednoj toki. prima string result koji sadri
 #popis amplituda od startFreq do stopFreq odvojenih zarezom
