@@ -20,6 +20,8 @@ class SavingResult:
         
         self.tempX=0
         self.tempY=0
+        if 'linesScanned' in SavingResultConst:
+            self.tempY += int(SavingResultConst['linesScanned']) * self.stepsPerScanY * self.stepSize    
         self.oneLineResult=list()
         self.q=Queue()
         self.t= Thread(target=self._saveOneLineResult)
@@ -51,10 +53,10 @@ class SavingResult:
             i=0
             for temp in item:
                 j=0
-                path=str(self.scanResultFolder)+"x_"+str(i*self.stepsPerScanX*self.stepSize)+"_y_"+str((self.tempY)*self.stepSize*self.stepsPerScanY)+".txt"
+                path=str(self.scanResultFolder)+"x_"+str(i*self.stepsPerScanX*self.stepSize)+"_y_"+str(self.tempY)+".txt"
                 
                 foo=open(path,'w')
-                foo.write("x_"+str(i*self.stepsPerScanX*self.stepSize)+"_y_"+str((self.tempY)*self.stepSize*self.stepsPerScanY)+"\n")
+                foo.write("x_"+str(i*self.stepsPerScanX*self.stepSize)+"_y_"+str(self.tempY)+"\n")
                 for temp1 in temp:
                     foo.write(str(self.freqStart+j*self.distanceFreq)+','+str(temp1)+'\n')
                     j+=1

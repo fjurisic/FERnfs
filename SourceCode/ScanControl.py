@@ -50,8 +50,8 @@ class ScanController:
                 self.yOffsetSteps += 1
         # continuing a interrupted scan?
         if 'linesScanned' in nfsConf:
-            self.linesScanned = nfsConf['linesScanned']
-            self.xOffsetSteps += self.stepX * (int(nfsConf['linesScanned'])+1)
+            self.linesScanned = int(nfsConf['linesScanned'])
+            self.yOffsetSteps += self.stepY * self.linesScanned
         else:
             self.linesScanned = 0
 
@@ -142,10 +142,12 @@ class ScanController:
         """ Writes scan configuration to scan result location. """
         scanConf = open(self.nfsConf['scanResultFolder']+"ScanConfig.conf", "w")
         for attribute, value in self.nfsConf.iteritems():
-            if attribute is not 'linesScanned':
+            if attribute == 'scanResultFolder':
+                scanConf.write(attribute+"=.\n")
+            if attribute != 'linesScanned':
                 scanConf.write(attribute+'='+value+'\n')
         if self.linesScanned != 0:
-            scanConf.write('linesScanned='+str(self.linesScanned))
+            scanConf.write('linesScanned='+str(self.linesScanned)+'\n')
         scanConf.close()
         self.savingResult.waitCompletition()
         if self.callbackFunction is not None:
