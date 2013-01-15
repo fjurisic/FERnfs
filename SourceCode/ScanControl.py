@@ -5,6 +5,7 @@
 
 import thread
 from time import sleep
+# Change simulator modules with real ones when needed.
 from MOTORSSimulator import Motors
 from SavingResult import SavingResult
 from ProbeControlSimulator import ProbeControl
@@ -90,10 +91,11 @@ class ScanController:
         while True:
             # move probe to initial height
             if self.scanZOption == 1:
-                print "Probudio se" 
+                # not implemented
+                pass 
             elif self.scanZOption == 2:
-                # use hMap
-                print "Not good"
+                # not implemented
+                pass
             scanResults = []
             backSteps = 0
             xPosition = baseXPosition
@@ -113,20 +115,20 @@ class ScanController:
                     self.motors.reset()
                     self._completeScan()
                     return
-                self.motors.moveXR(self.stepX)
+                self.motors.move(self.stepX, 0, 0)
                 sleep(self.stepWait * self.stepX)
                 backSteps += 1
             # store result list
             print "D: Storing scan results"
             self.savingResult.saveOneLineResult()
             # move probe to safe height 
-            self.motors.moveXL(self.stepX * backSteps)
+            self.motors.move(-1 * self.stepX * backSteps, 0, 0)
             sleep(self.stepWait * self.stepX * backSteps)
             self.linesScanned += 1
             yPosition += self.stepY * self.stepSize
             if yPosition > self.scanYLen or self.stopSignal == 1:
                      break
-            self.motors.moveYF(self.stepY)
+            self.motors.move(0, self.stepY, 0)
             sleep(self.stepY)
         
         # scan finished or interrupted
