@@ -4,9 +4,8 @@
 #
 
 import thread
-from time import sleep
 # Change simulator modules with real ones when needed.
-from MOTORSSimulator import Motors
+from MotorControlSimulator import Motors
 from SavingResult import SavingResult
 from ProbeControlSimulator import ProbeControl
 
@@ -31,7 +30,6 @@ class ScanController:
         self.scanXLen = float(nfsConf['scanXLength'])
         self.scanYLen = float(nfsConf['scanYLength'])
         self.stepSize = float(nfsConf['stepSize'])
-        self.stepWait = float(nfsConf['stepWait'])
         self.stepX = float(nfsConf['stepsPerScanX'])
         self.stepY = float(nfsConf['stepsPerScanY'])
         self.xOffsetSteps = 0
@@ -40,7 +38,6 @@ class ScanController:
         self.motors = Motors()
         self.probeControl = ProbeControl(nfsConf)
         self.savingResult = SavingResult(nfsConf)
-        self.motors.opensercom()
         if 'startingXOffset' in nfsConf:
             offset = float(nfsConf['startingXOffset'])
             while self.xOffsetSteps * self.stepSize < offset:
@@ -70,6 +67,9 @@ class ScanController:
 
     def startScan(self):
         """ Starts the scan as a new thread."""
+        self.motors.opensercom()
+        self.motors.sendconst(int(self.nfsConf['stepConstant']))
+        self.motors.startpoint()
         if self.stopSignal == -1:
             self.stopSignal = 0
             thread.start_new_thread(self._startScan, ())
@@ -87,7 +87,6 @@ class ScanController:
         baseXPosition = self.xOffsetSteps * self.stepSize - float(self.nfsConf['startingXOffset'])
         yPosition = self.yOffsetSteps * self.stepSize - float(self.nfsConf['startingYOffset'])
         self.motors.move(self.xOffsetSteps, self.yOffsetSteps, 0)
-        sleep(self.stepWait * (self.xOffsetSteps + self.yOffsetSteps))
         while True:
             # move probe to initial height
             if self.scanZOption == 1:
@@ -116,20 +115,17 @@ class ScanController:
                     self._completeScan()
                     return
                 self.motors.move(self.stepX, 0, 0)
-                sleep(self.stepWait * self.stepX)
                 backSteps += 1
             # store result list
             print "D: Storing scan results"
             self.savingResult.saveOneLineResult()
             # move probe to safe height 
             self.motors.move(-1 * self.stepX * backSteps, 0, 0)
-            sleep(self.stepWait * self.stepX * backSteps)
             self.linesScanned += 1
             yPosition += self.stepY * self.stepSize
             if yPosition > self.scanYLen or self.stopSignal == 1:
                      break
             self.motors.move(0, self.stepY, 0)
-            sleep(self.stepY)
         
         # scan finished or interrupted
         
@@ -155,39 +151,3 @@ class ScanController:
         if self.callbackFunction is not None:
             self.callbackFunction()
 
-
-    def _calculateApplicableHeightMap(self, nfsConfig, heightMap):
-        """
-            CURRENTLY NOT SUPPORTED
-            Converts the true height map to a map of
-            height accessible safely by the probe.
-        """
-#        self.probeConfig = readConfigFile(nfsConfig['probeConfigFile']) 
-#        if self.probeConfig == None:
-#            raise Exception('Unable to read probe config file')
-#        dx = float(nfsConfig['trueXDimension']) / (nfsConfig['pointXDimension'] - 1)
-#        dy = float(nfsConfig['trueYDimension']) / (nfsConfig['pointYDimension'] - 1)
-#        ppX = math.ceil(float(probeConfig['dimensionX']) / dx)
-#        ppY = math.ceil(float(probeConfig['dimensionY']) / dx)
-#        #
-#        # TODO allow for second layer of probe dimensions
-#        #
-#        applicableHeighMap = []
-#        for i in range(0, nfsConfig['pointXDimension']):
-#            applicableHeightMap.append([])
-#            for j in range(0, nfsConfig['pointYDimension']):
-#                minX = max(i - ppX, 0)
-#                minY = max(j - ppY, 0)
-#                maxX = min(i + ppX, nfsConfig['pointXDimension']-1)
-#                maxY = min(j + ppY, nfsConfig['pointYDimension']-1)
-#                applicableHeightMap[i].append(_findMaxHeight(minX, minY, maxX, maxY, heightMap) + nfsConfig['measureDistance'])
-#
-#        return applicableHeightMap
-#
-#    def _findMaxHeight(self, minX, minY, maxX, maxY, heightMap):
-#        """Finds the maximum height in a given area of height map"""
-#        maxHeight = 0
-#        for i in range(minX, maxX+1):
-#            for j in range(minY, maxY+1):
-#                maxHeight = max(maxHeight, heightMap[i][j])
-#        return maxHeight
