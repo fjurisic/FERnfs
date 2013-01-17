@@ -31,17 +31,27 @@ class Motors:
         
 
     # slanje konstante koja odreduje minimalni pomak i vrijeme cekanja izmedu slanja naredbi PIC-u
-    def sendconst(self,const): # 
-        if const != 100:
+    def sendconst(self,const): #
+
+        if const>= 4 and const<=200:
             Motors.ser.write("K")
-            Motors.ser.write(chr(const))
+            if const > 127:
+                k=const-127
+                Motors.ser.write(chr(127))
+                Motors.ser.write(chr(k))
+            else:
+                Motors.ser.write(chr(const))
+                Motors.ser.write(chr(0))
+            Motors.ser.write(chr(0))
+            Motors.ser.write(chr(0))
+            Motors.ser.write(chr(0))
+        
             Motors.tm=const*0.0025
-        else:
-            Motors.tm=0.25
 
 
     # metoda koja omogucuje ponistavanje brojaca koraka nakon rucnog pozicioniranja u pocetnu tocku
     def startpoint(self):
+        
         Motors.X=0
         Motors.Y=0
         Motors.Z=0
