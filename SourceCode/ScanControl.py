@@ -68,7 +68,7 @@ class ScanController:
     def startScan(self):
         """ Starts the scan as a new thread."""
         self.motors.opensercom()
-        self.motors.sendconst(int(self.nfsConf['stepConstant']))
+        self.motors.sendconst(int(self.nfsConf['stepWait']))
         self.motors.startpoint()
         if self.stopSignal == -1:
             self.stopSignal = 0
